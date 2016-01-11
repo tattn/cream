@@ -10,7 +10,6 @@ lg = LexerGenerator()
 lg.add('FLOAT', '-?\d+\.\d+')
 lg.add('INTEGER', '-?\d+')
 lg.add('STRING', '(""".*?""")|(".*?")|(\'.*?\')')
-#lg.add('PRINT', 'print(?!\w)') # put this before variable which would otherwise match
 lg.add('BOOLEAN', "true(?!\w)|false(?!\w)")
 lg.add('IF', 'if(?!\w)')
 lg.add('ELSE', 'else(?!\w)')
@@ -18,7 +17,7 @@ lg.add('END', 'end(?!\w)')
 lg.add('AND', "and(?!\w)")
 lg.add('OR', "or(?!\w)")
 lg.add('NOT', "not(?!\w)")
-lg.add('LET', 'let(?!\w)')
+# lg.add('LET', 'let(?!\w)')
 lg.add('FOR', 'for(?!\w)')
 lg.add('WHILE', 'while(?!\w)')
 lg.add('BREAK', 'break(?!\w)')
@@ -69,7 +68,8 @@ lg.add('DIV', '/')
 lg.add('MOD', '%')
 lg.add('(', '\(')
 lg.add(')', '\)')
-lg.add('NEWLINE', '\n')
+lg.add('PARENCOLON', '\):')
+lg.add('NEWLINE', '\n+')
 
 # ignore whitespace
 lg.ignore('[ \t\r\f\v]+')
@@ -98,7 +98,7 @@ def trim_multiline(source):
 
 def lex(source):
     source = trim_comment(source)
-    source = trim_multiline(source)
+    # source = trim_multiline(source)
 
     #print "source is now: %s" % source
 

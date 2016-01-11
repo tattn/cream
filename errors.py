@@ -11,11 +11,12 @@ class UnexpectedEndError(Exception):
 
 
 class UnexpectedTokenError(Exception):
-    def __init__(self, token):
+    def __init__(self, token, pos):
         self.token = token
+        self.pos = pos
 
     def __str__(self):
-        return self.token
+        return "[%s], line %d, col %d" % (self.token, self.pos.lineno, self.pos.colno)
 
 
 class ImmutableError(Exception):

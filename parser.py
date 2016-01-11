@@ -14,18 +14,19 @@ pg = ParserGenerator(
     # All token names
     ['STRING', 'INTEGER', 'FLOAT', 'IDENTIFIER', 'BOOLEAN',
      'PLUS', 'MINUS', 'MUL', 'DIV',
-     'IF', 'ELSE', 'COLON', 'END', 'AND', 'OR', 'NOT', 'LET','WHILE',
-     '(', ')', '=', '==', '!=', '>=', '<=', '<', '>', '[', ']', ',',
+     'IF', 'ELSE', 'COLON', 'END', 'AND', 'OR', 'NOT', 'WHILE',
+     '(', ')', 'PARENCOLON', '=', '==', '!=', '>=', '<=', '<', '>', '[', ']', ',',
      '{','}',
      '$end', 'NEWLINE', 'FUNCTION',
     ],
     # Precedence rules
     precedence = [
         ('left', ['FUNCTION',]),
-        ('left', ['LET',]),
+        # ('left', ['LET',]),
         ('left', ['=']),
-        ('left', ['[',']',',']),
+        ('left', ['[', ']', ',',]),
         ('left', ['IF', 'COLON', 'ELSE', 'END', 'NEWLINE','WHILE',]),
+        ('left', ['PARENCOLON']),
         ('left', ['AND', 'OR',]),
         ('left', ['NOT',]),
         ('left', ['==', '!=', '>=','>', '<', '<=',]),
@@ -37,6 +38,10 @@ pg = ParserGenerator(
 @pg.production("main : program")
 def main_program(self, p):
     return p[0]
+
+@pg.production('program : NEWLINE program')
+def ignore_first_newline(state, p):
+    return p[1]
 
 @pg.production('program : stmt_full')
 def program_stmt(state, p):
@@ -77,26 +82,24 @@ def stmt_full(state, p):
 def stmt_expr(state, p):
     return p[0]
 
-@pg.production('stmt : LET IDENTIFIER = expr')
+@pg.production('stmt : IDENTIFIER = expr')
 def stmt_assignment(state, p):
-    return Assignment(Variable(p[1].getstr()),p[3])
+    return Assignment(Variable(p[0].getstr()),p[2])
 
-@pg.production('stmt : FUNCTION IDENTIFIER ( arglist ) COLON NEWLINE block END')
-def stmt_func(state, p):
-    return FunctionDeclaration(p[1].getstr(), Array(p[3]), p[7])
+@pg.production('stmt : IDENTIFIER ( arglist ) COLON NEWLINE block END')
+def stmt_func_def(state, p):
+    return FunctionDeclaration(p[0].getstr(), Array(p[2]), p[6])
 
-@pg.production('stmt : FUNCTION IDENTIFIER ( ) COLON NEWLINE block END')
-def stmt_func_noargs(state, p):
-    return FunctionDeclaration(p[1].getstr(), Null(), p[6])
+@pg.production('stmt : IDENTIFIER ( ) COLON NEWLINE block END')
+def stmt_func_noargs_def(state, p):
+    return FunctionDeclaration(p[0].getstr(), Null(), p[5])
 
 @pg.production('const : FLOAT')
 def expr_float(state, p):
-    # p is a list of the pieces matched by the right hand side of the rule
     return Float(float(p[0].getstr()))
 
 @pg.production('const : BOOLEAN')
 def expr_boolean(state, p):
-    # p is a list of the pieces matched by the right hand side of the rule
     return Boolean(True if p[0].getstr() == 'true' else False)
 
 @pg.production('const : INTEGER')
@@ -124,29 +127,29 @@ def expr_array(state, p):
 def exprlist_single(state, p):
     return InnerArray([p[0]])
 
-@pg.production('exprlist : expr , exprlist')
-def arglist(state, p):
+@pg.production('exprlist : exprlist , expr')
+def exprlist(state, p):
     # exprlist should already be an InnerArray
-    p[2].push(p[0])
-    return p[2]
+    p[0].push(p[2])
+    return p[0]
 
 @pg.production('arglist : IDENTIFIER')
 @pg.production('arglist : IDENTIFIER ,')
 def arglist_single(state, p):
     return InnerArray([Variable(p[0].getstr())])
 
-@pg.production('arglist : IDENTIFIER , arglist')
+@pg.production('arglist : arglist , IDENTIFIER')
 def arglist(state, p):
     # list should already be an InnerArray
-    p[2].push(Variable(p[0].getstr()))
-    return p[2]
+    p[0].push(Variable(p[2].getstr()))
+    return p[0]
 
-@pg.production('maplist : expr COLON expr')
-@pg.production('maplist : expr COLON expr ,')
+@pg.production('maplist : IDENTIFIER COLON expr')
+@pg.production('maplist : IDENTIFIER COLON expr ,')
 def maplist_single(state, p):
     return InnerDict({ p[0]: p[2] })
 
-@pg.production('maplist : expr COLON expr , maplist')
+@pg.production('maplist : IDENTIFIER COLON expr , maplist')
 def arglist(state, p):
     # exprlist should already be an InnerArray
     p[4].update(p[0],p[2])
@@ -168,15 +171,15 @@ def expr_if_single_line(state, p):
 def expr_if_else_single_line(state, p):
     return If(condition=p[1],body=p[3],else_body=p[6])
 
-@pg.production('expr : IF expr COLON NEWLINE block END')
+@pg.production('expr : IF expr NEWLINE block END')
 def expr_if(state, p):
-    return If(condition=p[1],body=p[4])
+    return If(condition=p[1],body=p[3])
 
-@pg.production('expr : IF expr COLON NEWLINE block ELSE COLON NEWLINE block END')
+@pg.production('expr : IF expr NEWLINE block ELSE NEWLINE block END')
 def expr_if_else(state, p):
-    return If(condition=p[1],body=p[4],else_body=p[8])
+    return If(condition=p[1],body=p[3],else_body=p[6])
 
-@pg.production('expr : WHILE expr COLON NEWLINE block END')
+@pg.production('expr : WHILE expr NEWLINE block END')
 def expr_while(state, p):
     return While(condition=p[1],body=p[4])
 
@@ -247,11 +250,11 @@ def error_handler(state, token):
     # print the token for debug
     pos = token.getsourcepos()
     if pos:
-        raise UnexpectedTokenError(token.gettokentype())
+        raise UnexpectedTokenError(token.gettokentype(), pos)
     elif token.gettokentype() == '$end':
         raise UnexpectedEndError()
     else:
-        raise UnexpectedTokenError(token.gettokentype())
+        raise UnexpectedTokenError(token.gettokentype(), None)
 
 parser = pg.build()
 state = ParserState()

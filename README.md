@@ -23,7 +23,7 @@ cd cream
 pip install -r requirements.txt
 ```
 
-4-1 Run as Python
+4-1 Run on Python
 ```bash
 ./cream.py examples/hello.crm
 ```
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 python rpython --output cream target.py
 ```
 
-4-2-2 Run as Native code
+4-2-2 Run as a native code
 ```bash
 ./cream examples/hello.crm
 ```

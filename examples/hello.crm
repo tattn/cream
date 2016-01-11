@@ -1,8 +1,9 @@
-let num = 3
-let hello = "hello"
+
+num = 3
+hello = "hello"
 
 # Function
-func a(arg):
+a(arg):
   arg
 end
 
@@ -10,10 +11,10 @@ print(a(num) + a(num))
 print(a(hello) + a(hello))
 print(a(hello) * a(num))
 
-func b(truthy):
-  if truthy:
+b(truthy):
+  if truthy
     print("true")
-  else:
+  else
     print("not true")
   end
 end
@@ -24,10 +25,10 @@ b(1)
 b(0)
 b("string")
 
-func min(left, right):
-  if (left > right):
+min(left, right):
+  if left > right
     right
-  else:
+  else
     left
   end
 end
