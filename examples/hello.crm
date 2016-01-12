@@ -4,7 +4,7 @@ hello = "hello"
 
 # Function
 a(arg):
-  arg
+	arg
 end
 
 print(a(num) + a(num))
@@ -12,11 +12,11 @@ print(a(hello) + a(hello))
 print(a(hello) * a(num))
 
 b(truthy):
-  if truthy
-    print("true")
-  else
-    print("not true")
-  end
+	if truthy
+		print("true")
+	else
+		print("not true")
+	end
 end
 
 b(true)
@@ -26,11 +26,11 @@ b(0)
 b("string")
 
 min(left, right):
-  if left > right
-    right
-  else
-    left
-  end
+	if left > right
+		right
+	else
+		left
+	end
 end
 
 print(min(5, 6))

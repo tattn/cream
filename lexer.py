@@ -70,9 +70,11 @@ lg.add('(', '\(')
 lg.add(')', '\)')
 lg.add('PARENCOLON', '\):')
 lg.add('NEWLINE', '\n+')
+lg.add('WHITESPACE', '\t')
 
 # ignore whitespace
-lg.ignore('[ \t\r\f\v]+')
+# lg.ignore('[ \t\r\f\v]+')
+lg.ignore('[ \r\f\v]+')
 
 lexer = lg.build()
 
@@ -96,10 +98,35 @@ def trim_multiline(source):
         line = re.search(multiline,source)
     return source
 
+class CreamStream(object):
+    def __init__(self, stream):
+        self.stream = []
+        self.idx = 0
+
+        while True:
+            try:
+                token = stream.next()
+                if token.gettokentype() == 'WHITESPACE':
+                    if token.getstr() == '\n':
+                        token.name = 'INDENT'
+                        print(token)
+                else:
+                    self.stream.append(token)
+            except StopIteration:
+                break
+
+    def next(self):
+        if self.idx < len(self.stream):
+            token = self.stream[self.idx]
+            self.idx += 1
+            return token
+        else:
+            raise StopIteration
+
 def lex(source):
     source = trim_comment(source)
     # source = trim_multiline(source)
 
     #print "source is now: %s" % source
 
-    return lexer.lex(source)
+    return CreamStream(lexer.lex(source))

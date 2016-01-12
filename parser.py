@@ -5,8 +5,11 @@ from errors import *
 import lexer
 import os
 
+TAB_WIDTH = 4
+
 class ParserState(object):
     def __init__(self):
+        self.indent = 0
         # declared variables
         self.variables = {}
 
@@ -17,7 +20,7 @@ pg = ParserGenerator(
      'IF', 'ELSE', 'COLON', 'END', 'AND', 'OR', 'NOT', 'WHILE',
      '(', ')', 'PARENCOLON', '=', '==', '!=', '>=', '<=', '<', '>', '[', ']', ',',
      '{','}',
-     '$end', 'NEWLINE', 'FUNCTION',
+     '$end', 'NEWLINE', 'FUNCTION', 'INDENT',
     ],
     # Precedence rules
     precedence = [
@@ -42,6 +45,10 @@ def main_program(self, p):
 @pg.production('program : NEWLINE program')
 def ignore_first_newline(state, p):
     return p[1]
+
+# @pg.production('suite: NEWLINE INDENT block DEDENT')
+# def indent_stmt(state, p):
+#     return p[2]
 
 @pg.production('program : stmt_full')
 def program_stmt(state, p):
