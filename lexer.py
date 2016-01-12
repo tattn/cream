@@ -1,4 +1,5 @@
 from rply import LexerGenerator
+from rply.token import Token
 try:
     import rpython.rlib.rsre.rsre_re as re
 except:    
@@ -68,9 +69,8 @@ lg.add('DIV', '/')
 lg.add('MOD', '%')
 lg.add('(', '\(')
 lg.add(')', '\)')
-lg.add('PARENCOLON', '\):')
 lg.add('NEWLINE', '\n+')
-lg.add('WHITESPACE', '\t')
+lg.add('WHITESPACE', '\t+')
 
 # ignore whitespace
 # lg.ignore('[ \t\r\f\v]+')
@@ -103,16 +103,48 @@ class CreamStream(object):
         self.stream = []
         self.idx = 0
 
+        TAB_WIDTH = 4
+        indent = 0
+        current_indent = 0
+        indent_token = None
+        indent_start_pos = 0
+
         while True:
             try:
                 token = stream.next()
-                if token.gettokentype() == 'WHITESPACE':
-                    if token.getstr() == '\n':
-                        token.name = 'INDENT'
-                        print(token)
-                else:
-                    self.stream.append(token)
+                token_type = token.gettokentype()
+                if token_type == 'WHITESPACE':
+                    indent_token = token
+                    # WHITESPACE is tab only now.
+                    indent = len(token.getstr()) * TAB_WIDTH
+                elif token_type == 'NEWLINE':
+                    # print("%d <=> %d" % (current_indent, indent))
+                    if current_indent < indent:
+                        indent_token.name = 'INDENT'
+                        current_indent = indent
+                    elif current_indent > indent:
+                        dedent_num = (current_indent - indent) / TAB_WIDTH
+                        for i in range(0, dedent_num):
+                            if indent_token == None:
+                                indent_token = Token('', '', token.getsourcepos())
+                                self.stream.insert(indent_start_pos, indent_token)
+                            indent_token.name = 'DEDENT'
+                            indent_token = None
+                        current_indent = indent
+                    else:
+                        if indent_token != None:
+                            self.stream.remove(indent_token)
+                    indent = 0
+                    indent_token = None
+                    indent_start_pos = len(self.stream) + 1
+
+                self.stream.append(token)
+
             except StopIteration:
+                if current_indent > 0:
+                    print(current_indent)
+                    dedents = [Token('DEDENT', '')] * (current_indent / TAB_WIDTH)
+                    self.stream.extend(dedents)
                 break
 
     def next(self):
@@ -123,10 +155,15 @@ class CreamStream(object):
         else:
             raise StopIteration
 
+    def __str__(self):
+        return "%s" % self.stream
+
 def lex(source):
     source = trim_comment(source)
     # source = trim_multiline(source)
 
-    #print "source is now: %s" % source
+    # print "source is now: %s" % source
 
-    return CreamStream(lexer.lex(source))
+    stream = CreamStream(lexer.lex(source))
+    # print(stream)
+    return stream

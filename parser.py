@@ -5,11 +5,8 @@ from errors import *
 import lexer
 import os
 
-TAB_WIDTH = 4
-
 class ParserState(object):
     def __init__(self):
-        self.indent = 0
         # declared variables
         self.variables = {}
 
@@ -18,9 +15,9 @@ pg = ParserGenerator(
     ['STRING', 'INTEGER', 'FLOAT', 'IDENTIFIER', 'BOOLEAN',
      'PLUS', 'MINUS', 'MUL', 'DIV',
      'IF', 'ELSE', 'COLON', 'END', 'AND', 'OR', 'NOT', 'WHILE',
-     '(', ')', 'PARENCOLON', '=', '==', '!=', '>=', '<=', '<', '>', '[', ']', ',',
+     '(', ')', '=', '==', '!=', '>=', '<=', '<', '>', '[', ']', ',',
      '{','}',
-     '$end', 'NEWLINE', 'FUNCTION', 'INDENT',
+     '$end', 'NEWLINE', 'FUNCTION', 'INDENT', 'DEDENT',
     ],
     # Precedence rules
     precedence = [
@@ -29,7 +26,6 @@ pg = ParserGenerator(
         ('left', ['=']),
         ('left', ['[', ']', ',',]),
         ('left', ['IF', 'COLON', 'ELSE', 'END', 'NEWLINE','WHILE',]),
-        ('left', ['PARENCOLON']),
         ('left', ['AND', 'OR',]),
         ('left', ['NOT',]),
         ('left', ['==', '!=', '>=','>', '<', '<=',]),
@@ -46,9 +42,9 @@ def main_program(self, p):
 def ignore_first_newline(state, p):
     return p[1]
 
-# @pg.production('suite: NEWLINE INDENT block DEDENT')
-# def indent_stmt(state, p):
-#     return p[2]
+@pg.production('suite : NEWLINE INDENT block DEDENT')
+def indent_stmt(state, p):
+    return p[2]
 
 @pg.production('program : stmt_full')
 def program_stmt(state, p):
@@ -59,7 +55,7 @@ def program_stmt_program(state, p):
     if type(p[1]) is Program:
         program = p[1]
     else:
-        program = Program(p[12])
+        program = Program(p[1])
     
     program.add_statement(p[0])
     return p[1]
@@ -82,7 +78,22 @@ def block_expr_block(state, p):
 
 @pg.production('stmt_full : stmt NEWLINE')
 @pg.production('stmt_full : stmt $end')
+@pg.production('stmt_full : stmt')
 def stmt_full(state, p):
+    return p[0]
+
+@pg.production('ignores : ignores ignore')
+@pg.production('ignores : ignore')
+@pg.production('ignore : NEWLINE')
+def stmt_ignores(state, p):
+    return None
+
+@pg.production('stmt : ignores stmt')
+def stmt_ignore_before(state, p):
+    return p[1]
+
+@pg.production('stmt : stmt ignores')
+def stmt_ignore_after(state, p):
     return p[0]
 
 @pg.production('stmt : expr')
@@ -93,9 +104,10 @@ def stmt_expr(state, p):
 def stmt_assignment(state, p):
     return Assignment(Variable(p[0].getstr()),p[2])
 
-@pg.production('stmt : IDENTIFIER ( arglist ) COLON NEWLINE block END')
+# @pg.production('stmt : IDENTIFIER ( arglist ) COLON NEWLINE block END')
+@pg.production('stmt : IDENTIFIER ( arglist ) COLON suite')
 def stmt_func_def(state, p):
-    return FunctionDeclaration(p[0].getstr(), Array(p[2]), p[6])
+    return FunctionDeclaration(p[0].getstr(), Array(p[2]), p[5])
 
 @pg.production('stmt : IDENTIFIER ( ) COLON NEWLINE block END')
 def stmt_func_noargs_def(state, p):
@@ -178,13 +190,19 @@ def expr_if_single_line(state, p):
 def expr_if_else_single_line(state, p):
     return If(condition=p[1],body=p[3],else_body=p[6])
 
-@pg.production('expr : IF expr NEWLINE block END')
-def expr_if(state, p):
-    return If(condition=p[1],body=p[3])
 
-@pg.production('expr : IF expr NEWLINE block ELSE NEWLINE block END')
+@pg.production('expr : if_expr')
+def expr(state, p):
+    return p[0]
+
+@pg.production('if_expr : IF expr suite')
+def expr_if(state, p):
+    return If(condition=p[1],body=p[2])
+
+@pg.production('expr : if_expr ELSE suite')
 def expr_if_else(state, p):
-    return If(condition=p[1],body=p[3],else_body=p[6])
+    p[0].else_body = p[2]
+    return p[0]
 
 @pg.production('expr : WHILE expr NEWLINE block END')
 def expr_while(state, p):

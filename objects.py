@@ -60,6 +60,18 @@ class Array(BaseBox):
 
     def dump(self):
         return self.to_string()
+
+    def equals(self, right):
+        if isinstance(right, Array):
+            return Boolean(self.values == right.values)
+        if isinstance(right, Boolean):
+            if right.boolvalue:
+                return Boolean(len(self.values))
+            else:
+                return Boolean(not len(self.values))
+        else:
+            return Boolean(False)
+        raise LogicError("Cannot compare that to boolean")
     
     def map(self, fun, ls):  
         nls = []
