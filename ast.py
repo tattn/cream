@@ -149,12 +149,12 @@ class Array(BaseBox):
     def append(self, statement):
         self.statements.append(statement)
     
-    def index(self, i):
-        if type(i) is Integer:
-            return self.values[i.value]
-        if type(i) is Float:
-            return self.values[int(i.value)]
-        raise LogicError("Cannot index with that value")
+    # def index(self, i):
+    #     if type(i) is Integer:
+    #         return self.values[i.value]
+    #     if type(i) is Float:
+    #         return self.values[int(i.value)]
+    #     raise LogicError("Cannot index with that value")
     
     def add(self, right):
         if type(right) is Array:
@@ -199,11 +199,11 @@ class InnerDict(BaseBox):
 
 
 class Dict(BaseBox):
-    def map(self, fun, ls):  
-        nls = []
-        for l in ls:
-          nls.append(fun(l))
-        return nls
+    # def map(self, fun, ls):  
+    #     nls = []
+    #     for l in ls:
+    #       nls.append(fun(l))
+    #     return nls
     
     def __init__(self, inner):
         self.data = inner.get_data()
@@ -227,8 +227,8 @@ class Dict(BaseBox):
         result += ')'
         return result
     
-    def to_string(self):
-        return '{ %s }' % (", ".join(self.map(lambda k: "%s: %s" % (k[0].to_string(), k[1].to_string()),self.values.iteritems())))
+    # def to_string(self):
+    #     return '{ %s }' % (", ".join(self.map(lambda k: "%s: %s" % (k[0].to_string(), k[1].to_string()),self.values.iteritems())))
 
 
 class Null(BaseBox):
@@ -351,6 +351,8 @@ class If(BaseBox):
     def rep(self):
         return 'If(%s) Then(%s) Else(%s)' % (self.condition.rep(), self.body.rep(), self.else_body.rep())
 
+    def set_else(self, else_body):
+        self.else_body = else_body
 
 class While(BaseBox):
     def __init__(self, condition, body):

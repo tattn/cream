@@ -201,7 +201,7 @@ def expr_if(state, p):
 
 @pg.production('expr : if_expr ELSE suite')
 def expr_if_else(state, p):
-    p[0].else_body = p[2]
+    p[0].set_else(p[2])
     return p[0]
 
 @pg.production('expr : WHILE expr NEWLINE block END')

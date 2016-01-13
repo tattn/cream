@@ -8,7 +8,8 @@ def main(argv):
     cream.run(argv[1:])
     return 0
 
-def target(*args):
+def target(driver, args):
+    driver.exe_name = 'cream'
     return main, None
 
 def jitpolicy(driver):

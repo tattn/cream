@@ -28,7 +28,8 @@ def run(args):
         # print compile_file(args[0])
         
     elif len(args) == 0:
-        repl.main()
+        pass
+        # repl.main()
     else:
         print "I don't understand these arguments"
 

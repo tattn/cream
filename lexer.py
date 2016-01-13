@@ -112,33 +112,6 @@ class CreamStream(object):
         while True:
             try:
                 token = stream.next()
-                token_type = token.gettokentype()
-                if token_type == 'WHITESPACE':
-                    indent_token = token
-                    # WHITESPACE is tab only now.
-                    indent = len(token.getstr()) * TAB_WIDTH
-                elif token_type == 'NEWLINE':
-                    # print("%d <=> %d" % (current_indent, indent))
-                    if current_indent < indent:
-                        indent_token.name = 'INDENT'
-                        current_indent = indent
-                    elif current_indent > indent:
-                        dedent_num = (current_indent - indent) / TAB_WIDTH
-                        for i in range(0, dedent_num):
-                            if indent_token == None:
-                                indent_token = Token('', '', token.getsourcepos())
-                                self.stream.insert(indent_start_pos, indent_token)
-                            indent_token.name = 'DEDENT'
-                            indent_token = None
-                        current_indent = indent
-                    else:
-                        if indent_token != None:
-                            self.stream.remove(indent_token)
-                    indent = 0
-                    indent_token = None
-                    indent_start_pos = len(self.stream) + 1
-
-                self.stream.append(token)
 
             except StopIteration:
                 if current_indent > 0:
@@ -146,6 +119,34 @@ class CreamStream(object):
                     dedents = [Token('DEDENT', '')] * (current_indent / TAB_WIDTH)
                     self.stream.extend(dedents)
                 break
+
+            token_type = token.gettokentype()
+            if token_type == 'WHITESPACE':
+                indent_token = token
+                # WHITESPACE is tab only now.
+                indent = len(token.getstr()) * TAB_WIDTH
+            elif token_type == 'NEWLINE':
+                # print("%d <=> %d" % (current_indent, indent))
+                if current_indent < indent:
+                    indent_token.name = 'INDENT'
+                    current_indent = indent
+                elif current_indent > indent:
+                    dedent_num = (current_indent - indent) / TAB_WIDTH
+                    for i in range(0, dedent_num):
+                        if not indent_token:
+                            indent_token = Token('', '', token.getsourcepos())
+                            self.stream.insert(indent_start_pos, indent_token)
+                        indent_token.name = 'DEDENT'
+                        indent_token = None
+                    current_indent = indent
+                else:
+                    if indent_token:
+                        self.stream.remove(indent_token)
+                indent = 0
+                indent_token = None
+                indent_start_pos = len(self.stream) + 1
+
+            self.stream.append(token)
 
     def next(self):
         if self.idx < len(self.stream):
