@@ -166,5 +166,5 @@ def lex(source):
     # print "source is now: %s" % source
 
     stream = CreamStream(lexer.lex(source))
-    # print(stream)
+    print(stream)
     return stream

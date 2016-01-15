@@ -199,11 +199,11 @@ class InnerDict(BaseBox):
 
 
 class Dict(BaseBox):
-    # def map(self, fun, ls):  
-    #     nls = []
-    #     for l in ls:
-    #       nls.append(fun(l))
-    #     return nls
+    def map(self, fun, ls):
+        nls = []
+        for l in ls:
+          nls.append(fun(l))
+        return nls
     
     def __init__(self, inner):
         self.data = inner.get_data()
@@ -217,7 +217,9 @@ class Dict(BaseBox):
     
     def eval(self, env):
         if len(self.values) == 0:            
+            pass
             for statement in self.statements:
+            # for statement in self.data:
                 self.values.append(statement.eval(env))
         return self
     
